@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@400;600&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #0f172a; /* Dark magical background */
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 2s ease-in-out;
+        }
+
+        .active-bg {
+            background: radial-gradient(circle at center, #2e0854 0%, #0f172a 100%);
+        }
+
+        /* Magical glowing text */
+        .glowing-text {
+            font-family: 'Dancing Script', cursive;
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff, 0 0 30px #ff00ff, 0 0 40px #ff00ff;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .show-text {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Floating emojis */
+        .emoji {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+            animation: floatUp linear forwards;
+            opacity: 0;
+            z-index: 20;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) rotate(0deg) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-10vh) rotate(360deg) scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* Sparkles for the button */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px 5px rgba(236, 72, 153, 0.5); }
+            50% { box-shadow: 0 0 30px 10px rgba(236, 72, 153, 0.8); }
+        }
+
+        .magic-btn {
+            animation: pulse-glow 2s infinite;
+        }
+
+        #wishes-container {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 2s ease-in-out 1s, transform 2s ease-in-out 1s; /* delayed fade in */
+        }
+        .show-wishes {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+        
+        .gif-container {
+            width: 200px; /* Slightly wider to fit the Tenor GIF nicely */
+            margin: 0 auto 1rem auto;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: white;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center relative">
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="z-50 flex flex-col items-center justify-center text-center p-6 absolute inset-0 bg-slate-900 transition-opacity duration-1000">
+        <h1 class="text-3xl font-bold mb-8 text-pink-300">A Magical Gift Awaits...</h1>
+        <button id="start-btn" class="magic-btn bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg transform transition hover:scale-105 active:scale-95">
+            Tap to Open ✨
+        </button>
+    </div>
+
+    <!-- Magic Content (Hidden Initially) -->
+    <div id="magic-content" class="z-10 flex flex-col items-center justify-center text-center p-4 absolute inset-0 pointer-events-auto">
+        <h1 id="bday-title" class="glowing-text text-5xl md:text-7xl text-pink-200 mb-6 mt-4">
+            Happy Birthday<br>Sister!
+        </h1>
+        
+        <div id="wishes-container" class="px-6 py-6 bg-white/10 backdrop-blur-md rounded-2xl max-w-md border border-white/20 flex flex-col items-center">
+            
+            <!-- Animated Tenor GIF -->
+            <div class="gif-container pointer-events-auto">
+                <div class="tenor-gif-embed" data-postid="16579503" data-share-method="host" data-aspect-ratio="1" data-width="100%"></div>
+                <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
+            </div>
+
+            <p class="text-lg md:text-xl text-pink-50 leading-relaxed font-light mt-4">
+                Wishing you a day filled with magic, light, and endless joy. May all your dreams come true today and always. 💖🌟
+            </p>
+        </div>
+    </div>
+
+    <!-- Container for falling emojis -->
+    <div id="emoji-container" class="absolute inset-0 overflow-hidden pointer-events-none"></div>
+
+    <script>
+        // Elements
+        const startBtn = document.getElementById('start-btn');
+        const startScreen = document.getElementById('start-screen');
+        const body = document.body;
+        const bdayTitle = document.getElementById('bday-title');
+        const wishesContainer = document.getElementById('wishes-container');
+        const emojiContainer = document.getElementById('emoji-container');
+
+        // Emoji list for the magic effect
+        const emojis = ['✨', '🎉', '🎂', '💖', '🎈', '🌟', '🎁', '👑'];
+
+        // Audio Context setup (for synthesizing Happy Birthday tune)
+        let audioCtx;
+
+        function createMagic() {
+            // Hide start screen
+            startScreen.style.opacity = '0';
+            setTimeout(() => {
+                startScreen.style.display = 'none';
+            }, 1000);
+
+            // Change background
+            body.classList.add('active-bg');
+
+            // Show Text & GIF container
+            setTimeout(() => {
+                bdayTitle.classList.add('show-text');
+                wishesContainer.classList.add('show-wishes');
+            }, 500);
+
+            // Start Emoji Spawner
+            setInterval(spawnEmoji, 300);
+
+            // Play Music for 1 minute
+            playHappyBirthday();
+        }
+
+        function spawnEmoji() {
+            const emojiEl = document.createElement('div');
+            emojiEl.classList.add('emoji');
+            
+            // Randomize emoji
+            emojiEl.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            
+            // Randomize horizontal position
+            emojiEl.style.left = Math.random() * 100 + 'vw';
+            
+            // Randomize duration (speed of floating)
+            const duration = Math.random() * 3 + 4; // 4 to 7 seconds
+            emojiEl.style.animationDuration = duration + 's';
+            
+            // Randomize size slightly
+            emojiEl.style.fontSize = (Math.random() * 1.5 + 1.5) + 'rem';
+
+            emojiContainer.appendChild(emojiEl);
+
+            // Remove emoji after animation completes
+            setTimeout(() => {
+                emojiEl.remove();
+            }, duration * 1000);
+        }
+
+        // A simple Music Box Synthesizer for "Happy Birthday" (Extended to ~1 minute)
+        function playHappyBirthday() {
+            // Initialize audio context on user interaction
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            // Frequencies for notes: C4, D4, E4, F4, G4, A4, Bb4, C5
+            const notes = {
+                'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 
+                'G4': 392.00, 'A4': 440.00, 'Bb4': 466.16, 'C5': 523.25
+            };
+
+            // Melody sequence: [Note, Duration in beats]
+            const melody = [
+                ['C4', 0.75], ['C4', 0.25], ['D4', 1], ['C4', 1], ['F4', 1], ['E4', 2],
+                ['C4', 0.75], ['C4', 0.25], ['D4', 1], ['C4', 1], ['G4', 1], ['F4', 2],
+                ['C4', 0.75], ['C4', 0.25], ['C5', 1], ['A4', 1], ['F4', 1], ['E4', 1], ['D4', 1],
+                ['Bb4', 0.75], ['Bb4', 0.25], ['A4', 1], ['F4', 1], ['G4', 1], ['F4', 2]
+            ];
+
+            // 100 BPM makes it slightly slower, like a sweet music box.
+            // One full melody takes exactly 15 seconds.
+            const tempo = 100; 
+            const beatDuration = 60 / tempo;
+            let startTime = audioCtx.currentTime + 0.5; // slight delay before starting
+
+            // Loop the song 4 times (15 seconds * 4 = 60 seconds total)
+            const loops = 4;
+
+            for (let i = 0; i < loops; i++) {
+                melody.forEach(noteData => {
+                    const noteName = noteData[0];
+                    const duration = noteData[1] * beatDuration;
+                    
+                    playNote(notes[noteName], startTime, duration);
+                    startTime += duration; // advance time for next note
+                });
+                
+                // Add a brief pause (1.5 seconds) between loops before it restarts
+                startTime += 1.5; 
+            }
+        }
+
+        function playNote(frequency, startTime, duration) {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            // Setup oscillator (sine wave sounds gentle, like a music box or flute)
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, startTime);
+
+            // Envelope to make it sound nice (fade in and fade out)
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.1); // Attack
+            gainNode.gain.setValueAtTime(0.3, startTime + duration - 0.1); // Sustain
+            gainNode.gain.linearRampToValueAtTime(0, startTime + duration); // Release
+
+            // Connect and play
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        }
+
+        // Event Listener for the button
+        startBtn.addEventListener('click', createMagic);
+
+    </script>
+</body>
+</html>
